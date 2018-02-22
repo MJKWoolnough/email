@@ -2,27 +2,13 @@ package email
 
 import (
 	"crypto/tls"
+	"net"
 	"net/smtp"
-	"net/url"
-	"strings"
 	"time"
 )
 
 // runs in its own goroutine
-func (s *Sender) run(auth smtp.Auth, host, from string, timeout time.Duration) {
-	if !strings.HasPrefix("smtp://") && !strings.HasPrefix("smtps://") {
-		host = "smtp://" + host
-	}
-	address, _ := url.Parse(host)
-	if address.Port() == "" {
-		switch address.Scheme {
-		case "smtp":
-			address.Host += ":smtp"
-		case "smtps":
-			address.Host += ":465"
-		}
-	}
-	serverName := address.Hostname()
+func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bool, timeout time.Duration) {
 	var (
 		timer  *time.Timer
 		client *smtp.Client
@@ -33,6 +19,9 @@ func (s *Sender) run(auth smtp.Auth, host, from string, timeout time.Duration) {
 		timer.Stop()
 	} else {
 		timer = new(time.Timer)
+	}
+	tlsConfig := tls.Config{
+		ServerName: serverName,
 	}
 	for {
 		select {
@@ -56,13 +45,19 @@ func (s *Sender) run(auth smtp.Auth, host, from string, timeout time.Duration) {
 				client = nil
 			}
 			if client == nil {
-				client, err = smtp.Dial(host)
+				var conn net.Conn
+				if encrypted {
+					conn, err = tls.Dial("tcp", host, &tlsConfig)
+				} else {
+					conn, err = net.Dial("tcp", host)
+				}
+				client, err = smtp.NewClient(conn, host)
 				if err != nil {
 					//TODO:handle
 					continue
 				}
 				if hasTLS, _ := client.Extension("STARTTLS"); hasTLS {
-					err = client.StartTLS(&tls.Config{ServerName: serverName})
+					err = client.StartTLS(&tlsConfig)
 					if err != nil {
 						client.Close()
 						client = nil

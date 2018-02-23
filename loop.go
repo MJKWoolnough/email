@@ -94,7 +94,7 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 				//TODO:handle
 				continue
 			}
-			_, err = se.data.WriteTo(wc)
+			_, err = se.data.MessageTo(wc)
 			if err != nil {
 				client.Reset()
 				//TODO:handle

@@ -2,7 +2,6 @@ package email
 
 import (
 	"crypto/tls"
-	"io"
 	"net"
 	"net/smtp"
 	"net/url"
@@ -67,10 +66,10 @@ func NewSender(auth smtp.Auth, host, from string, timeout time.Duration) (*Sende
 
 type sendEmail struct {
 	to   string
-	data io.WriterTo
+	data Message
 }
 
-func (s *Sender) Send(to string, data io.WriterTo) {
+func (s *Sender) Send(to string, data Message) {
 	s.send <- sendEmail{to, data}
 }
 

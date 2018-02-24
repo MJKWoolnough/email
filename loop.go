@@ -14,7 +14,7 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 		client *smtp.Client
 		err    error
 	)
-	if timeout > 0 {
+	if timeout >= 0 {
 		timer = time.NewTimer(time.Hour)
 		timer.Stop()
 	} else {
@@ -65,7 +65,7 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 						continue
 					}
 				}
-				err = client.Auth(e.auth)
+				err = client.Auth(auth)
 				if err != nil {
 					client.Close()
 					client = nil
@@ -74,7 +74,7 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 				}
 			}
 
-			err = client.Mail(e.from)
+			err = client.Mail(from)
 			if err != nil {
 				client.Reset()
 				//TODO:handle
@@ -94,19 +94,17 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 				//TODO:handle
 				continue
 			}
-			_, err = se.data.MessageTo(wc)
-			if err != nil {
-				client.Reset()
-				//TODO:handle
-				continue
-			}
+			se.data.MessageTo(wc)
 			wc.Close()
 
-			if e.timeout > 0 {
+			if timeout > 0 {
 				if !timer.Stop() {
 					<-timer.C
 				}
-				timer.Reset(e.timeout)
+				timer.Reset(timeout)
+			} else if timeout == 0 {
+				client.Close()
+				client = nil
 			}
 		}
 	}

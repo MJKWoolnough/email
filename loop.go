@@ -8,7 +8,7 @@ import (
 )
 
 // runs in its own goroutine
-func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bool, timeout time.Duration) {
+func (s *Sender) run(auth smtp.Auth, serverName, host, from string, authenticate, encrypted bool, timeout time.Duration) {
 	var (
 		timer  *time.Timer
 		client *smtp.Client
@@ -67,12 +67,14 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 						}
 					}
 				}
-				err = client.Auth(auth)
-				if err != nil {
-					client.Close()
-					client = nil
-					//TODO:handle
-					continue
+				if authenticate {
+					err = client.Auth(auth)
+					if err != nil {
+						client.Close()
+						client = nil
+						//TODO:handle
+						continue
+					}
 				}
 			}
 

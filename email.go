@@ -50,8 +50,11 @@ func NewSender(auth smtp.Auth, host, from string, timeout time.Duration) (*Sende
 			return nil, err
 		}
 	}
-	if err = client.Auth(auth); err != nil {
-		return nil, err
+	authenticate, _ := client.Extension("AUTH")
+	if authenticate {
+		if err = client.Auth(auth); err != nil {
+			return nil, err
+		}
 	}
 	if err = client.Quit(); err != nil {
 		return nil, err
@@ -60,7 +63,7 @@ func NewSender(auth smtp.Auth, host, from string, timeout time.Duration) (*Sende
 		send:  make(chan sendEmail),
 		close: make(chan struct{}),
 	}
-	go s.run(auth, serverName, address.Host, from, encrypted, timeout)
+	go s.run(auth, serverName, address.Host, from, authenticate, encrypted, timeout)
 	return s, nil
 }
 

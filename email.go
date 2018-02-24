@@ -61,7 +61,7 @@ func NewSender(auth smtp.Auth, host, from string, timeout time.Duration) (*Sende
 		close: make(chan struct{}),
 	}
 	go s.run(auth, serverName, address.Host, from, encrypted, timeout)
-	return s
+	return s, nil
 }
 
 type sendEmail struct {

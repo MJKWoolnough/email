@@ -56,13 +56,15 @@ func (s *Sender) run(auth smtp.Auth, serverName, host, from string, encrypted bo
 					//TODO:handle
 					continue
 				}
-				if hasTLS, _ := client.Extension("STARTTLS"); hasTLS {
-					err = client.StartTLS(&tlsConfig)
-					if err != nil {
-						client.Close()
-						client = nil
-						//TODO:handle
-						continue
+				if !encrypted {
+					if hasTLS, _ := client.Extension("STARTTLS"); hasTLS {
+						err = client.StartTLS(&tlsConfig)
+						if err != nil {
+							client.Close()
+							client = nil
+							//TODO:handle
+							continue
+						}
 					}
 				}
 				err = client.Auth(auth)

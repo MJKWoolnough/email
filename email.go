@@ -1,4 +1,4 @@
-package email
+package email // import "vimagination.zapto.org/email"
 
 import (
 	"crypto/tls"
